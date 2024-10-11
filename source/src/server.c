@@ -2,7 +2,6 @@
 // Created by brandonr on 10/10/24.
 //
 
-
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -32,7 +31,7 @@ filter_function get_filter_function(const char *filter_name);
 
 void *handle_client(void *arg);
 
-void handle_sigInt(int sig) __attribute__((noreturn));;
+void handle_sigInt(int sig) __attribute__((noreturn));
 
 int main(void)
 {
@@ -95,7 +94,6 @@ int main(void)
     close(input_fd);
     return 0;
 }
-
 
 static char upper_filter(char c)
 {
@@ -179,4 +177,3 @@ void handle_sigInt(int sig)
     unlink(OUTPUT_FIFO);
     _exit(EXIT_SUCCESS);
 }
-

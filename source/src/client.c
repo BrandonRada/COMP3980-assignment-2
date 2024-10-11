@@ -2,7 +2,6 @@
 // Created by brandonr on 10/10/24.
 //
 
-
 #include <fcntl.h>
 #include <getopt.h>
 #include <stdio.h>
@@ -14,7 +13,7 @@
 #define INPUT_FIFO "./input_fifo"
 #define OUTPUT_FIFO "./output_fifo"
 
-void usage(const char *program_name)__attribute__((noreturn));
+void usage(const char *program_name) __attribute__((noreturn));
 
 void parse_arguments(int argc, char *argv[], char **filter, char **string);
 
@@ -57,8 +56,6 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-
 
 void usage(const char *program_name)
 {
