@@ -2,7 +2,7 @@
 // Created by brandonr on 10/10/24.
 //
 
-#include "../include/client.h"
+
 #include <fcntl.h>
 #include <getopt.h>
 #include <stdio.h>
@@ -14,35 +14,9 @@
 #define INPUT_FIFO "./input_fifo"
 #define OUTPUT_FIFO "./output_fifo"
 
-void usage(const char *program_name)
-{
-    fprintf(stderr, "Usage: %s -f <upper|lower|null> -s <string>\n", program_name);
-    exit(EXIT_FAILURE);
-}
+void usage(const char *program_name)__attribute__((noreturn));
 
-void parse_arguments(int argc, char *argv[], char **filter, char **string)
-{
-    int opt;
-    opterr = 0;
-    while((opt = getopt(argc, argv, "f:s:")) != -1)
-    {
-        switch(opt)
-        {
-            case 'f':
-                *filter = optarg;
-                break;
-            case 's':
-                *string = optarg;
-                break;
-            default:
-                usage(argv[0]);
-        }
-    }
-    if(!*filter || !*string)
-    {
-        usage(argv[0]);
-    }
-}
+void parse_arguments(int argc, char *argv[], char **filter, char **string);
 
 int main(int argc, char *argv[])
 {
@@ -82,4 +56,36 @@ int main(int argc, char *argv[])
     close(output_fd);
 
     return 0;
+}
+
+
+
+void usage(const char *program_name)
+{
+    fprintf(stderr, "Usage: %s -f <upper|lower|null> -s <string>\n", program_name);
+    exit(EXIT_FAILURE);
+}
+
+void parse_arguments(int argc, char *argv[], char **filter, char **string)
+{
+    int opt;
+    opterr = 0;
+    while((opt = getopt(argc, argv, "f:s:")) != -1)
+    {
+        switch(opt)
+        {
+            case 'f':
+                *filter = optarg;
+                break;
+            case 's':
+                *string = optarg;
+                break;
+            default:
+                usage(argv[0]);
+        }
+    }
+    if(!*filter || !*string)
+    {
+        usage(argv[0]);
+    }
 }

@@ -2,7 +2,7 @@
 // Created by brandonr on 10/10/24.
 //
 
-#include "../include/server.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -21,6 +21,81 @@
 #define OUTPUT_FIFO "./output_fifo"
 
 typedef char (*filter_function)(char);
+
+static char upper_filter(char c);
+
+static char lower_filter(char c);
+
+static char null_filter(char c);
+
+filter_function get_filter_function(const char *filter_name);
+
+void *handle_client(void *arg);
+
+void handle_sigInt(int sig) __attribute__((noreturn));;
+
+int main(void)
+{
+    int       input_fd;
+    pthread_t thread;
+    char     *request;
+
+    if(mkfifo(INPUT_FIFO, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1 && errno != EEXIST)
+    {
+        perror("Failed to create input FIFO");
+        exit(EXIT_FAILURE);
+    }
+    if(mkfifo(OUTPUT_FIFO, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1 && errno != EEXIST)
+    {
+        perror("Failed to create output FIFO");
+        unlink(INPUT_FIFO);
+        exit(EXIT_FAILURE);
+    }
+
+    signal(SIGINT, handle_sigInt);
+
+    input_fd = open(INPUT_FIFO, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+    if(input_fd == -1)
+    {
+        perror("Failed to open input FIFO\n");
+        exit(EXIT_FAILURE);
+    }
+
+    errno = 0;
+    while(true)
+    {
+        char    buffer[BUFFER_SIZE];
+        ssize_t bytes_read = read(input_fd, buffer, sizeof(buffer) - 1);
+
+        if(bytes_read > 0)
+        {
+            buffer[bytes_read] = '\0';
+            request            = strdup(buffer);
+
+            pthread_create(&thread, NULL, handle_client, request);
+            pthread_detach(thread);
+        }
+        else if(bytes_read == -1 && errno == EAGAIN)
+        {
+            sleep(SLEEP_LENGTH);
+            continue;
+        }
+        else if(bytes_read == 0)
+        {
+            // No data to read at the moment, just wait
+            sleep(SLEEP_LENGTH);
+        }
+        else
+        {
+            perror("Error reading from input FIFO");
+            break;
+        }
+    }
+
+    close(input_fd);
+    return 0;
+}
+
 
 static char upper_filter(char c)
 {
@@ -105,64 +180,3 @@ void handle_sigInt(int sig)
     _exit(EXIT_SUCCESS);
 }
 
-int main(void)
-{
-    int       input_fd;
-    pthread_t thread;
-    char     *request;
-
-    if(mkfifo(INPUT_FIFO, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1 && errno != EEXIST)
-    {
-        perror("Failed to create input FIFO");
-        exit(EXIT_FAILURE);
-    }
-    if(mkfifo(OUTPUT_FIFO, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1 && errno != EEXIST)
-    {
-        perror("Failed to create output FIFO");
-        unlink(INPUT_FIFO);
-        exit(EXIT_FAILURE);
-    }
-
-    signal(SIGINT, handle_sigInt);
-
-    input_fd = open(INPUT_FIFO, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
-    if(input_fd == -1)
-    {
-        perror("Failed to open input FIFO\n");
-        exit(EXIT_FAILURE);
-    }
-
-    errno = 0;
-    while(true)
-    {
-        char    buffer[BUFFER_SIZE];
-        ssize_t bytes_read = read(input_fd, buffer, sizeof(buffer) - 1);
-
-        if(bytes_read > 0)
-        {
-            buffer[bytes_read] = '\0';
-            request            = strdup(buffer);
-
-            pthread_create(&thread, NULL, handle_client, request);
-            pthread_detach(thread);
-        }
-        else if(bytes_read == -1 && errno == EAGAIN)
-        {
-            sleep(SLEEP_LENGTH);
-            continue;
-        }
-        else if(bytes_read == 0)
-        {
-            // No data to read at the moment, just wait
-            sleep(SLEEP_LENGTH);
-        }
-        else
-        {
-            perror("Error reading from input FIFO");
-            break;
-        }
-    }
-
-    close(input_fd);
-    return 0;
-}
