@@ -112,6 +112,12 @@ static char null_filter(char c)
 
 filter_function get_filter_function(const char *filter_name)
 {
+    if (filter_name == NULL)
+    {
+    	fprintf(stderr, "Filter name is NULL\n");
+        exit(EXIT_FAILURE);
+    }
+
     if(strcmp(filter_name, "upper") == 0)
     {
         return upper_filter;
